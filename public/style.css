@@ -762,6 +762,108 @@ body {
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+/* ─── Generator Modal ────────────────────────────────────────── */
+.modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 0;
+}
+
+.modal__title {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--text-light);
+  font-weight: 700;
+}
+
+.modal__body {
+  padding: 16px 24px 24px;
+  color: var(--text-light);
+}
+
+#gen-modal .modal__content {
+  background: var(--bg-dark);
+  max-width: 520px;
+}
+
+#gen-modal .btn--sm {
+  background: var(--bg-light);
+  color: var(--text-light);
+  border: 1px solid rgba(201,168,76,0.2);
+}
+
+#gen-modal .btn--sm:hover {
+  border-color: var(--gold);
+}
+
+.gen-form {
+  padding: 8px 0;
+}
+
+.gen-field {
+  margin-bottom: 24px;
+}
+
+.gen-field__label {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: var(--text-light);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.gen-choices {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gen-choice {
+  flex: 1 1 160px;
+}
+
+.gen-choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gen-choice__inner {
+  display: block;
+  padding: 18px 14px;
+  background: var(--bg-light);
+  border: 2px solid rgba(201,168,76,0.12);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--text-light);
+  transition: all 0.2s;
+}
+
+.gen-choice__inner small {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 300;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.gen-choice input:checked + .gen-choice__inner {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.1);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
+.gen-choice__inner:hover {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.06);
+}
+
 .modal__toolbar {
   display: flex;
   justify-content: flex-end;

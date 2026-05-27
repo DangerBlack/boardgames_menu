@@ -85,6 +85,14 @@ const menuPreview = $('#menu-preview');
 const printBtn = $('#print-btn');
 const closeModalBtn = $('#close-modal-btn');
 
+/* ─── Generator refs ─────────────────────────────────────────── */
+const genBtn = $('#generate-btn');
+const genModal = $('#gen-modal');
+const closeGenBtn = $('#close-gen-btn');
+const genGoBtn = $('#gen-go-btn');
+const genError = $('#gen-error');
+const genPlayers = $('#gen-players');
+
 /* ─── BGG Import ────────────────────────────────────────────── */
 importForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -259,11 +267,9 @@ function getFilteredGames() {
 
 function suggestCourse(game) {
   const playtime = game.playingTime || 0;
-  const weight = game.weight || 0;
 
-  if (playtime === 0 && weight === 0) return null;
+  if (playtime === 0) return null;
   if (playtime <= 30) return 'appetizer';
-  if (weight > 0 && weight < 2.0) return 'appetizer';
   return 'main';
 }
 
@@ -495,6 +501,155 @@ function escHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+/* ─── Menu Generator ────────────────────────────────────────── */
+genBtn.addEventListener('click', () => {
+  genModal.classList.remove('hidden');
+  genError.classList.add('hidden');
+});
+
+closeGenBtn.addEventListener('click', () => genModal.classList.add('hidden'));
+genModal.querySelector('.modal__backdrop').addEventListener('click', () => genModal.classList.add('hidden'));
+
+genGoBtn.addEventListener('click', () => {
+  genError.classList.add('hidden');
+
+  if (state.games.length === 0) {
+    genError.textContent = 'Import your BGG collection first!';
+    genError.classList.remove('hidden');
+    return;
+  }
+
+  const vibe = document.querySelector('input[name="gen-vibe"]:checked');
+  if (!vibe) return;
+  const vibeVal = vibe.value;
+  const playerCount = parseInt(genPlayers.value, 10) || 4;
+
+  const result = generateMenu(state.games, vibeVal, playerCount);
+  if (result.error) {
+    genError.textContent = result.error;
+    genError.classList.remove('hidden');
+    return;
+  }
+
+  state.menu = result.menu;
+  state.playerCount = playerCount;
+  genModal.classList.add('hidden');
+  renderAll();
+});
+
+function generateMenu(games, vibe, playerCount) {
+  const rangeMap = {
+    easy:   { min: 0,   max: 2.0 },
+    mid:    { min: 1.5, max: 3.2 },
+    wild:   { min: 2.5, max: 5.0 },
+  };
+  const range = rangeMap[vibe];
+
+  const valid = games.filter((g) => {
+    if (!g.weight || g.weight === 0) return false;
+    if (!g.playingTime || g.playingTime === 0) return false;
+    if ((g.minPlayers || 0) > playerCount) return false;
+    if ((g.maxPlayers || 99) < playerCount) return false;
+    return true;
+  });
+
+  if (valid.length < 5) {
+    return { error: 'Not enough compatible games for this player count. Try a different vibe or import more games.' };
+  }
+
+  const maxPlays = Math.max(...valid.map((g) => g.numPlays || 0), 1);
+  const maxRating = Math.max(...valid.map((g) => g.bggRating || 0), 1);
+  const minYear = Math.min(...valid.map((g) => g.year || 9999));
+  const maxYear = Math.max(...valid.map((g) => g.year || 0));
+  const yearSpan = maxYear - minYear || 1;
+
+  const scored = valid.map((g) => {
+    const plays = g.numPlays || 0;
+    const loveScore = plays / maxPlays;
+    const rarity = 1 - (plays / maxPlays);
+    const communityScore = rarity * ((g.bggRating || 0) / maxRating);
+    const noveltyScore = ((g.year || minYear) - minYear) / yearSpan;
+    const idealWeight = (range.min + range.max) / 2;
+    const fitScore = 1 - Math.min(Math.abs(g.weight - idealWeight) / 2.5, 1);
+    const isLight = g.playingTime <= 30;
+    return { ...g, plays, loveScore, communityScore, noveltyScore, fitScore, isLight };
+  });
+
+  scored.forEach((g) => {
+    if (g.weight < range.min || g.weight > range.max) {
+      g.fitScore *= 0.3;
+    }
+  });
+
+  function weightedRandom(candidates, weightKey) {
+    const total = candidates.reduce((s, g) => s + g[weightKey] + 0.01, 0);
+    let r = Math.random() * total;
+    for (const g of candidates) {
+      r -= g[weightKey] + 0.01;
+      if (r <= 0) return g;
+    }
+    return candidates[candidates.length - 1];
+  }
+
+  function pickDiverse(candidates, weightKey, count) {
+    const picked = [];
+    const pool = [...candidates];
+    for (let i = 0; i < count && pool.length > 0; i++) {
+      const g = weightedRandom(pool, weightKey);
+      picked.push(g);
+      const idx = pool.indexOf(g);
+      if (idx !== -1) pool.splice(idx, 1);
+    }
+    return picked;
+  }
+
+  const usedIds = new Set();
+  const use = (g) => { usedIds.add(g.id); return g; };
+  const unused = () => scored.filter((g) => !usedIds.has(g.id));
+
+  let appetizers = [];
+  const lightPool = unused().filter((g) => g.isLight);
+  const lovedLight = pickDiverse(lightPool, 'loveScore', 1);
+  lovedLight.forEach((g) => appetizers.push(use(g)));
+  const communityLight = pickDiverse(unused().filter((g) => g.isLight), 'communityScore', 3);
+  communityLight.forEach((g) => appetizers.push(use(g)));
+  if (appetizers.length < 4) {
+    const extra = pickDiverse(unused().filter((g) => g.isLight), 'loveScore', 4 - appetizers.length);
+    extra.forEach((g) => appetizers.push(use(g)));
+  }
+  appetizers = appetizers.slice(0, 4);
+
+  let desserts = [];
+  const dessertPick = pickDiverse(unused().filter((g) => g.isLight), 'communityScore', 1);
+  if (dessertPick.length > 0) desserts.push(use(dessertPick[0]));
+  const dessertNovel = pickDiverse(unused().filter((g) => g.isLight), 'noveltyScore', 1);
+  if (dessertNovel.length > 0) desserts.push(use(dessertNovel[0]));
+  desserts = desserts.slice(0, 2);
+
+  const mains = [];
+  const loved = pickDiverse(unused(), 'loveScore', 1);
+  loved.forEach((g) => mains.push(use(g)));
+  const community = pickDiverse(unused(), 'communityScore', 1);
+  community.forEach((g) => mains.push(use(g)));
+  const novel = pickDiverse(unused(), 'noveltyScore', 1);
+  novel.forEach((g) => mains.push(use(g)));
+  const remainingMain = pickDiverse(unused(), 'fitScore', 3);
+  remainingMain.forEach((g) => mains.push(use(g)));
+  mains.splice(5);
+
+  if (appetizers.length === 0 && mains.length === 0) {
+    return { error: 'Could not build a balanced menu. Try a different vibe or import more games.' };
+  }
+
+  return {
+    menu: {
+      appetizer: appetizers,
+      main: mains,
+      dessert: desserts,
+    }
+  };
 }
 
 /* ─── Auto-load from URL ────────────────────────────────────── */
