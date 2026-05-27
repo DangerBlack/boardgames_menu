@@ -16,6 +16,37 @@ const courseConfig = {
   dessert: { label: 'Dolce', limit: Infinity, badge: 'Dolce' },
 };
 
+const menuFonts = [
+  { name: 'Playfair Display', value: "'Playfair Display', serif", google: 'Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600' },
+  { name: 'EB Garamond', value: "'EB Garamond', serif", google: 'EB+Garamond:ital,wght@0,400;0,600;0,700;1,400' },
+  { name: 'Cormorant Garamond', value: "'Cormorant Garamond', serif", google: 'Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400' },
+  { name: 'Bodoni Moda', value: "'Bodoni Moda', serif", google: 'Bodoni+Moda:opsz,wght@6..12,400;6..12,600;6..12,700' },
+  { name: 'Lora', value: "'Lora', serif", google: 'Lora:ital,wght@0,400;0,600;0,700;1,400' },
+  { name: 'Merriweather', value: "'Merriweather', serif", google: 'Merriweather:wght@300;400;700;900' },
+  { name: 'Cinzel', value: "'Cinzel', serif", google: 'Cinzel:wght@400;600;700' },
+  { name: 'Prata', value: "'Prata', serif", google: 'Prata' },
+  { name: 'Libre Baskerville', value: "'Libre Baskerville', serif", google: 'Libre+Baskerville:ital,wght@0,400;0,700;1,400' },
+  { name: 'Old Standard TT', value: "'Old Standard TT', serif", google: 'Old+Standard+TT:ital,wght@0,400;0,700;1,400' },
+  { name: 'Unna', value: "'Unna', serif", google: 'Unna:ital,wght@0,400;0,700;1,400' },
+  { name: 'Cardo', value: "'Cardo', serif", google: 'Cardo:ital,wght@0,400;0,700;1,400' },
+  { name: 'Vollkorn', value: "'Vollkorn', serif", google: 'Vollkorn:ital,wght@0,400;0,600;0,700;1,400' },
+  { name: 'Lato', value: "'Lato', sans-serif", google: 'Lato:wght@300;400;700' },
+  { name: 'Montserrat', value: "'Montserrat', sans-serif", google: 'Montserrat:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400' },
+  { name: 'Raleway', value: "'Raleway', sans-serif", google: 'Raleway:ital,wght@0,300;0,400;0,600;0,700;1,300' },
+  { name: 'Oswald', value: "'Oswald', sans-serif", google: 'Oswald:wght@300;400;600;700' },
+  { name: 'Work Sans', value: "'Work Sans', sans-serif", google: 'Work+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300' },
+];
+
+function loadGoogleFont(font) {
+  const id = `gf-${font.name.replace(/\s+/g, '-').toLowerCase()}`;
+  if (document.getElementById(id)) return;
+  const link = document.createElement('link');
+  link.id = id;
+  link.rel = 'stylesheet';
+  link.href = `https://fonts.googleapis.com/css2?family=${font.google}&display=swap`;
+  document.head.appendChild(link);
+}
+
 /* ─── DOM refs ──────────────────────────────────────────────── */
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => document.querySelectorAll(s);
@@ -27,6 +58,8 @@ const importError = $('#import-error');
 const importResult = $('#import-result');
 const importCount = $('#import-count');
 const stepBuilder = $('#step-builder');
+const stepFont = $('#step-font');
+const fontOptions = $('#font-options');
 const searchInput = $('#search-input');
 const filterTags = $('#filter-tags');
 const gameGrid = $('#game-grid');
@@ -54,7 +87,10 @@ const closeModalBtn = $('#close-modal-btn');
 /* ─── BGG Import ────────────────────────────────────────────── */
 importForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const username = usernameInput.value.trim();
+  await doImport(usernameInput.value.trim());
+});
+
+async function doImport(username) {
   if (!username) return;
 
   importBtn.disabled = true;
@@ -81,6 +117,8 @@ importForm.addEventListener('submit', async (e) => {
     const data = await res.json();
     state.games = data.games || [];
 
+    history.replaceState(null, '', `?username=${encodeURIComponent(username)}`);
+
     importCount.textContent = state.games.length;
     importResult.classList.remove('hidden');
     stepBuilder.classList.remove('hidden');
@@ -89,6 +127,7 @@ importForm.addEventListener('submit', async (e) => {
     resetMenu();
     renderGrid();
     renderSlots();
+    renderFontOptions();
     updatePreviewBtn();
 
   } finally {
@@ -96,7 +135,7 @@ importForm.addEventListener('submit', async (e) => {
     importBtn.querySelector('.btn__text').textContent = 'Import';
     importBtn.querySelector('.btn__spinner').classList.add('hidden');
   }
-});
+}
 
 function showError(msg) {
   importError.textContent = msg;
@@ -134,6 +173,36 @@ filterWeight.addEventListener('change', () => {
   state.weightFilter = parseInt(filterWeight.value, 10);
   renderGrid();
 });
+
+/* ─── Font Options (Step 3) ─────────────────────────────────── */
+function renderFontOptions() {
+  stepFont.classList.remove('hidden');
+  fontOptions.innerHTML = menuFonts
+    .map((f, i) => {
+      const checked = i === 0 ? ' checked' : '';
+      return `
+        <div class="font-option">
+          <input type="radio" name="menu-font" id="font-${i}" value="${f.value}"${checked}>
+          <label for="font-${i}">
+            <div class="font-option__preview" style="font-family:${f.value}">${escHtml(f.name)}</div>
+            <div class="font-option__name">${escHtml(f.name)}</div>
+          </label>
+        </div>
+      `;
+    })
+    .join('');
+
+  document.getElementById('menu-preview').style.fontFamily = menuFonts[0].value;
+  loadGoogleFont(menuFonts[0]);
+
+  fontOptions.addEventListener('change', (e) => {
+    if (e.target.name === 'menu-font') {
+      const font = menuFonts.find((f) => f.value === e.target.value);
+      if (font) loadGoogleFont(font);
+      document.getElementById('menu-preview').style.fontFamily = e.target.value;
+    }
+  });
+}
 
 function getFilteredGames() {
   return state.games.filter((g) => {
@@ -324,8 +393,13 @@ previewBtn.addEventListener('click', () => {
     `${state.playerCount} player${state.playerCount > 1 ? 's' : ''}`;
 
   for (const course of ['appetizer', 'main', 'dessert']) {
+    const section = document.getElementById(`section-${course}`);
     const list = document.getElementById(`menu-${course}`);
     const items = state.menu[course];
+
+    section.classList.toggle('hidden', items.length === 0);
+    if (items.length === 0) continue;
+
     list.innerHTML = items
       .map(
         (g) => {
@@ -401,4 +475,12 @@ function escHtml(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+/* ─── Auto-load from URL ────────────────────────────────────── */
+const urlParams = new URLSearchParams(window.location.search);
+const urlUsername = urlParams.get('username');
+if (urlUsername) {
+  usernameInput.value = urlUsername;
+  doImport(urlUsername);
 }

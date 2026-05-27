@@ -667,6 +667,67 @@ body {
   margin-top: 8px;
 }
 
+.builder-actions--font {
+  margin-top: 28px;
+}
+
+/* ─── Font Options ──────────────────────────────────────────── */
+.font-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.font-option {
+  flex: 1 1 180px;
+  max-width: 220px;
+}
+
+.font-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.font-option label {
+  display: block;
+  padding: 18px 16px 14px;
+  background: var(--bg-light);
+  border: 2px solid rgba(201,168,76,0.12);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.font-option label:hover {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.06);
+}
+
+.font-option input:checked + label {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.1);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
+.font-option__preview {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.font-option__name {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 /* ─── Modal ─────────────────────────────────────────────────── */
 .modal {
   position: fixed;

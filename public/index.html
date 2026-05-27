@@ -164,16 +164,25 @@
           </div>
         </div>
 
-        <div class="builder-actions">
-          <div class="player-pick">
-            <label class="player-pick__label">👥 Playing with</label>
-            <div class="player-pick__controls">
-              <button id="player-dec" class="btn btn--icon">−</button>
-              <span id="player-count" class="player-pick__value">?</span>
-              <button id="player-inc" class="btn btn--icon">+</button>
-              <span class="player-pick__suffix">players</span>
-            </div>
+        <div class="player-pick">
+          <label class="player-pick__label">👥 Playing with</label>
+          <div class="player-pick__controls">
+            <button id="player-dec" class="btn btn--icon">−</button>
+            <span id="player-count" class="player-pick__value">?</span>
+            <button id="player-inc" class="btn btn--icon">+</button>
+            <span class="player-pick__suffix">players</span>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ STEP 3 — PICK MENU FONT ═══════════════════ -->
+    <section id="step-font" class="section hidden">
+      <div class="container">
+        <h2 class="section__title">3. Pick a Menu Font</h2>
+        <p class="section__desc">Choose the typeface for your printed menu card.</p>
+        <div id="font-options" class="font-options"></div>
+        <div class="builder-actions builder-actions--font">
           <button id="preview-btn" class="btn btn--gold" disabled>
             Preview Menu
           </button>
@@ -200,19 +209,19 @@
           <div class="menu-card__divider">✧ ✦ ✧</div>
         </div>
 
-        <div class="menu-card__section">
+        <div class="menu-card__section" id="section-appetizer">
           <h2 class="menu-card__course-title">Antipasto</h2>
           <p class="menu-card__course-desc">Per scaldarsi — giochi brevi e leggeri</p>
           <ul class="menu-card__items" id="menu-appetizer"></ul>
         </div>
 
-        <div class="menu-card__section menu-card__section--main">
+        <div class="menu-card__section menu-card__section--main" id="section-main">
           <h2 class="menu-card__course-title">Portata Principale</h2>
           <p class="menu-card__course-desc">Main Course — the centrepiece of the evening</p>
           <ul class="menu-card__items" id="menu-main"></ul>
         </div>
 
-        <div class="menu-card__section">
+        <div class="menu-card__section" id="section-dessert">
           <h2 class="menu-card__course-title">Dolce</h2>
           <p class="menu-card__course-desc">Dessert — a light finish to the night</p>
           <ul class="menu-card__items" id="menu-dessert"></ul>
