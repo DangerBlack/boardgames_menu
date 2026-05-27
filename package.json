@@ -1,0 +1,15 @@
+{
+  "name": "boardgames-menu",
+  "version": "1.0.0",
+  "description": "Board Games Menu — a fancy restaurant-style menu for your game night",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bgg-xml-api-client": "^0.3.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "he": "^1.2.0"
+  }
+}

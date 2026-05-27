@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Board Games Menu — Game Night à la Carte</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- ═══════════════════ HEADER ═══════════════════ -->
+  <header class="hero">
+    <div class="hero__overlay"></div>
+    <div class="hero__content">
+      <h1 class="hero__title">Board Games Menu</h1>
+      <p class="hero__subtitle">Game Night à la Carte</p>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- ═══════════════════ STEP 1 — IMPORT ═══════════════════ -->
+    <section id="step-import" class="section">
+      <div class="container">
+        <h2 class="section__title">1. Import Your Collection</h2>
+        <p class="section__desc">Enter your BoardGameGeek username to fetch your games (expansions excluded).</p>
+
+        <form id="import-form" class="import-form">
+          <div class="input-group">
+            <input
+              type="text"
+              id="username-input"
+              class="input"
+              placeholder="Your BGG username..."
+              required
+              autocomplete="off"
+            />
+            <button type="submit" class="btn btn--primary" id="import-btn">
+              <span class="btn__text">Import</span>
+              <span class="btn__spinner hidden"></span>
+            </button>
+          </div>
+        </form>
+
+        <div id="import-error" class="msg msg--error hidden"></div>
+        <div id="import-result" class="msg hidden">
+          <span id="import-count"></span> games found in your collection.
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ STEP 2 — MENU BUILDER ═══════════════════ -->
+    <section id="step-builder" class="section hidden">
+      <div class="container">
+        <h2 class="section__title">2. Compose Your Menu</h2>
+        <p class="section__desc">
+          Click a game to add it &mdash; short games (&le;30 min) or light games
+          (complexity &lt; 2.0) go to <em>Antipasto</em>, the rest go to
+          <em>Portata Principale</em>. Click again to cycle through courses,
+          click a third time to send to <em>Dolce</em>, one more click removes it.
+        </p>
+
+        <!-- Search & Filters -->
+        <div class="builder-controls">
+          <input
+            type="text"
+            id="search-input"
+            class="input input--search"
+            placeholder="Search games by name..."
+            autocomplete="off"
+          />
+          <div class="filter-tags" id="filter-tags">
+            <button class="tag tag--active" data-filter="all">All</button>
+            <button class="tag" data-filter="unassigned">Unassigned</button>
+            <button class="tag" data-filter="appetizer">Antipasto</button>
+            <button class="tag" data-filter="main">Principale</button>
+            <button class="tag" data-filter="dessert">Dolce</button>
+          </div>
+          <div class="filter-bars">
+            <label class="filter-bar">
+              <span class="filter-bar__label">Players</span>
+              <select id="filter-players" class="filter-bar__select">
+                <option value="0">Any</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7+</option>
+              </select>
+            </label>
+            <label class="filter-bar">
+              <span class="filter-bar__label">Duration</span>
+              <select id="filter-duration" class="filter-bar__select">
+                <option value="0">Any</option>
+                <option value="30">&le; 30 min</option>
+                <option value="60">&le; 60 min</option>
+                <option value="90">&le; 90 min</option>
+                <option value="120">&le; 120 min</option>
+                <option value="180">&le; 180 min</option>
+              </select>
+            </label>
+            <label class="filter-bar">
+              <span class="filter-bar__label">Complexity</span>
+              <select id="filter-weight" class="filter-bar__select">
+                <option value="0">Any</option>
+                <option value="1">Light (&le; 1.5)</option>
+                <option value="2">Medium (&le; 2.5)</option>
+                <option value="3">Heavy (&le; 3.5)</option>
+                <option value="4">Expert (&gt; 3.5)</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <!-- Game Grid -->
+        <div id="game-grid" class="game-grid"></div>
+
+        <!-- Course Slots -->
+        <div class="courses">
+          <!-- Appetizer -->
+          <div class="course-card" data-course="appetizer">
+            <div class="course-card__header course-card__header--appetizer">
+              <h3 class="course-card__title">Antipasto</h3>
+              <span class="course-card__subtitle">Giochi brevi e leggeri</span>
+            </div>
+            <div class="course-card__body" id="slot-appetizer">
+              <p class="course-card__placeholder">Clicca un gioco per aggiungerlo</p>
+            </div>
+            <div class="course-card__footer">
+              <span class="course-card__count" id="count-appetizer">0</span>
+            </div>
+          </div>
+
+          <!-- Main Course -->
+          <div class="course-card course-card--featured" data-course="main">
+            <div class="course-card__header course-card__header--main">
+              <h3 class="course-card__title">Portata Principale</h3>
+              <span class="course-card__subtitle">Fino a 5 giochi</span>
+            </div>
+            <div class="course-card__body" id="slot-main">
+              <p class="course-card__placeholder">Clicca un gioco per aggiungerlo</p>
+            </div>
+            <div class="course-card__footer">
+              <span class="course-card__count" id="count-main">0</span>
+              <span class="course-card__limit">/ 5</span>
+            </div>
+          </div>
+
+          <!-- Dessert -->
+          <div class="course-card" data-course="dessert">
+            <div class="course-card__header course-card__header--dessert">
+              <h3 class="course-card__title">Dolce</h3>
+              <span class="course-card__subtitle">Per concludere in bellezza</span>
+            </div>
+            <div class="course-card__body" id="slot-dessert">
+              <p class="course-card__placeholder">Clicca un gioco per aggiungerlo</p>
+            </div>
+            <div class="course-card__footer">
+              <span class="course-card__count" id="count-dessert">0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="builder-actions">
+          <div class="player-pick">
+            <label class="player-pick__label">👥 Playing with</label>
+            <div class="player-pick__controls">
+              <button id="player-dec" class="btn btn--icon">−</button>
+              <span id="player-count" class="player-pick__value">?</span>
+              <button id="player-inc" class="btn btn--icon">+</button>
+              <span class="player-pick__suffix">players</span>
+            </div>
+          </div>
+          <button id="preview-btn" class="btn btn--gold" disabled>
+            Preview Menu
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ═══════════════════ MENU PREVIEW MODAL ═══════════════════ -->
+  <div id="menu-modal" class="modal hidden">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content" id="menu-content">
+      <div class="modal__toolbar">
+        <button id="print-btn" class="btn btn--gold btn--sm">🖨️ Print</button>
+        <button id="close-modal-btn" class="btn btn--sm">✕ Close</button>
+      </div>
+      <div id="menu-preview" class="menu-card">
+        <div class="menu-card__ornament menu-card__ornament--top"></div>
+        <div class="menu-card__header">
+          <h1 class="menu-card__restaurant">Board Games Menu</h1>
+          <p class="menu-card__tagline">Game Night à la Carte</p>
+          <p class="menu-card__date" id="menu-date"></p>
+          <p class="menu-card__guests" id="menu-guests"></p>
+          <div class="menu-card__divider">✧ ✦ ✧</div>
+        </div>
+
+        <div class="menu-card__section">
+          <h2 class="menu-card__course-title">Antipasto</h2>
+          <p class="menu-card__course-desc">Per scaldarsi — giochi brevi e leggeri</p>
+          <ul class="menu-card__items" id="menu-appetizer"></ul>
+        </div>
+
+        <div class="menu-card__section menu-card__section--main">
+          <h2 class="menu-card__course-title">Portata Principale</h2>
+          <p class="menu-card__course-desc">Main Course — the centrepiece of the evening</p>
+          <ul class="menu-card__items" id="menu-main"></ul>
+        </div>
+
+        <div class="menu-card__section">
+          <h2 class="menu-card__course-title">Dolce</h2>
+          <p class="menu-card__course-desc">Dessert — a light finish to the night</p>
+          <ul class="menu-card__items" id="menu-dessert"></ul>
+        </div>
+
+        <div class="menu-card__footer">
+          <div class="menu-card__divider">✧ ✦ ✧</div>
+          <p class="menu-card__stars-legend" id="menu-stars-legend">★ loved · ★★ well loved · ★★★ very loved · ★★★★ favourite · ★★★★★ masterpiece</p>
+          <p class="menu-card__footer-text">Buon appetito!</p>
+        </div>
+        <div class="menu-card__ornament menu-card__ornament--bottom"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ FOOTER ═══════════════════ -->
+  <footer class="footer">
+    <p>Data from <a href="https://boardgamegeek.com" target="_blank" rel="noopener">BoardGameGeek</a></p>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
