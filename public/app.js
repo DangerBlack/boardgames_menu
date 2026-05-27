@@ -17,24 +17,25 @@ const courseConfig = {
 };
 
 const menuFonts = [
-  { name: 'Playfair Display', value: "'Playfair Display', serif", google: 'Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600' },
-  { name: 'EB Garamond', value: "'EB Garamond', serif", google: 'EB+Garamond:ital,wght@0,400;0,600;0,700;1,400' },
-  { name: 'Cormorant Garamond', value: "'Cormorant Garamond', serif", google: 'Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400' },
-  { name: 'Bodoni Moda', value: "'Bodoni Moda', serif", google: 'Bodoni+Moda:opsz,wght@6..12,400;6..12,600;6..12,700' },
-  { name: 'Lora', value: "'Lora', serif", google: 'Lora:ital,wght@0,400;0,600;0,700;1,400' },
-  { name: 'Merriweather', value: "'Merriweather', serif", google: 'Merriweather:wght@300;400;700;900' },
-  { name: 'Cinzel', value: "'Cinzel', serif", google: 'Cinzel:wght@400;600;700' },
-  { name: 'Prata', value: "'Prata', serif", google: 'Prata' },
-  { name: 'Libre Baskerville', value: "'Libre Baskerville', serif", google: 'Libre+Baskerville:ital,wght@0,400;0,700;1,400' },
-  { name: 'Old Standard TT', value: "'Old Standard TT', serif", google: 'Old+Standard+TT:ital,wght@0,400;0,700;1,400' },
-  { name: 'Unna', value: "'Unna', serif", google: 'Unna:ital,wght@0,400;0,700;1,400' },
-  { name: 'Cardo', value: "'Cardo', serif", google: 'Cardo:ital,wght@0,400;0,700;1,400' },
-  { name: 'Vollkorn', value: "'Vollkorn', serif", google: 'Vollkorn:ital,wght@0,400;0,600;0,700;1,400' },
-  { name: 'Lato', value: "'Lato', sans-serif", google: 'Lato:wght@300;400;700' },
-  { name: 'Montserrat', value: "'Montserrat', sans-serif", google: 'Montserrat:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400' },
-  { name: 'Raleway', value: "'Raleway', sans-serif", google: 'Raleway:ital,wght@0,300;0,400;0,600;0,700;1,300' },
-  { name: 'Oswald', value: "'Oswald', sans-serif", google: 'Oswald:wght@300;400;600;700' },
-  { name: 'Work Sans', value: "'Work Sans', sans-serif", google: 'Work+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300' },
+  { name: 'Playfair Display', value: "'Playfair Display', serif", google: 'Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600', caps: 'all' },
+  { name: 'EB Garamond', value: "'EB Garamond', serif", google: 'EB+Garamond:ital,wght@0,400;0,600;0,700;1,400', caps: 'title' },
+  { name: 'Cormorant Garamond', value: "'Cormorant Garamond', serif", google: 'Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400', caps: 'title' },
+  { name: 'Bodoni Moda', value: "'Bodoni Moda', serif", google: 'Bodoni+Moda:opsz,wght@6..12,400;6..12,600;6..12,700', caps: 'all' },
+  { name: 'Lora', value: "'Lora', serif", google: 'Lora:ital,wght@0,400;0,600;0,700;1,400', caps: 'title' },
+  { name: 'Merriweather', value: "'Merriweather', serif", google: 'Merriweather:wght@300;400;700;900', caps: 'title' },
+  { name: 'Monsieur La Doulaise', value: "'Monsieur La Doulaise', serif", google: 'Monsieur+La+Doulaise', caps: 'title' },
+  { name: 'Cinzel', value: "'Cinzel', serif", google: 'Cinzel:wght@400;600;700', caps: 'all' },
+  { name: 'Prata', value: "'Prata', serif", google: 'Prata', caps: 'title' },
+  { name: 'Libre Baskerville', value: "'Libre Baskerville', serif", google: 'Libre+Baskerville:ital,wght@0,400;0,700;1,400', caps: 'title' },
+  { name: 'Old Standard TT', value: "'Old Standard TT', serif", google: 'Old+Standard+TT:ital,wght@0,400;0,700;1,400', caps: 'title' },
+  { name: 'Unna', value: "'Unna', serif", google: 'Unna:ital,wght@0,400;0,700;1,400', caps: 'title' },
+  { name: 'Cardo', value: "'Cardo', serif", google: 'Cardo:ital,wght@0,400;0,700;1,400', caps: 'title' },
+  { name: 'Vollkorn', value: "'Vollkorn', serif", google: 'Vollkorn:ital,wght@0,400;0,600;0,700;1,400', caps: 'title' },
+  { name: 'Lato', value: "'Lato', sans-serif", google: 'Lato:wght@300;400;700', caps: 'all' },
+  { name: 'Montserrat', value: "'Montserrat', sans-serif", google: 'Montserrat:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400', caps: 'all' },
+  { name: 'Raleway', value: "'Raleway', sans-serif", google: 'Raleway:ital,wght@0,300;0,400;0,600;0,700;1,300', caps: 'all' },
+  { name: 'Oswald', value: "'Oswald', sans-serif", google: 'Oswald:wght@300;400;600;700', caps: 'all' },
+  { name: 'Work Sans', value: "'Work Sans', sans-serif", google: 'Work+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300', caps: 'all' },
 ];
 
 function loadGoogleFont(font) {
@@ -177,6 +178,10 @@ filterWeight.addEventListener('change', () => {
 /* ─── Font Options (Step 3) ─────────────────────────────────── */
 function renderFontOptions() {
   stepFont.classList.remove('hidden');
+
+  // Preload all fonts so the preview cards render immediately
+  menuFonts.forEach(loadGoogleFont);
+
   fontOptions.innerHTML = menuFonts
     .map((f, i) => {
       const checked = i === 0 ? ' checked' : '';
@@ -192,14 +197,29 @@ function renderFontOptions() {
     })
     .join('');
 
-  document.getElementById('menu-preview').style.fontFamily = menuFonts[0].value;
+  const menuTitle = document.querySelector('.menu-card__restaurant');
+  const courseTitles = document.querySelectorAll('.menu-card__course-title');
+
+  function applyFont(font) {
+    menuPreview.style.fontFamily = font.value;
+    menuTitle.style.fontFamily = font.value;
+    menuTitle.style.textTransform = font.caps === 'all' ? 'uppercase' : 'capitalize';
+    courseTitles.forEach((t) => {
+      t.style.fontFamily = font.value;
+      t.style.textTransform = font.caps === 'all' ? 'uppercase' : 'capitalize';
+    });
+  }
+
+  applyFont(menuFonts[0]);
   loadGoogleFont(menuFonts[0]);
 
   fontOptions.addEventListener('change', (e) => {
     if (e.target.name === 'menu-font') {
       const font = menuFonts.find((f) => f.value === e.target.value);
-      if (font) loadGoogleFont(font);
-      document.getElementById('menu-preview').style.fontFamily = e.target.value;
+      if (font) {
+        loadGoogleFont(font);
+        applyFont(font);
+      }
     }
   });
 }
