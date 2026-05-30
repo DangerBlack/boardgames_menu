@@ -55,6 +55,7 @@ const $$ = (s) => document.querySelectorAll(s);
 const importForm = $('#import-form');
 const usernameInput = $('#username-input');
 const importBtn = $('#import-btn');
+const skipBtn = $('#skip-btn');
 const importError = $('#import-error');
 const importResult = $('#import-result');
 const importCount = $('#import-count');
@@ -93,10 +94,48 @@ const genGoBtn = $('#gen-go-btn');
 const genError = $('#gen-error');
 const genPlayers = $('#gen-players');
 
+/* ─── Custom game refs ───────────────────────────────────────── */
+const customBtn = $('#custom-btn');
+const customModal = $('#custom-modal');
+const closeCustomBtn = $('#close-custom-btn');
+const customForm = $('#custom-form');
+const customName = $('#custom-name');
+const customMin = $('#custom-min');
+const customMax = $('#custom-max');
+const customTime = $('#custom-time');
+const customDesc = $('#custom-desc');
+const customImg = $('#custom-img');
+const customImgFile = $('#custom-img-file');
+const customDropzone = $('#custom-dropzone');
+const customPreviewImg = $('#custom-preview-img');
+const customImgRemove = $('#custom-img-remove');
+const customWeight = $('#custom-weight');
+const customError = $('#custom-error');
+const customFormTitle = $('#custom-form-title');
+
+/* ─── Description modal refs ──────────────────────────────────── */
+const descModal = $('#desc-modal');
+const descText = $('#desc-text');
+const descSaveBtn = $('#desc-save-btn');
+const closeDescBtn = $('#close-desc-btn');
+
+let customIdCounter = -1;
+let editingCustomId = null;
+let descTargetId = null;
+
 /* ─── BGG Import ────────────────────────────────────────────── */
 importForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   await doImport(usernameInput.value.trim());
+});
+
+skipBtn.addEventListener('click', () => {
+  stepBuilder.classList.remove('hidden');
+  stepBuilder.scrollIntoView({ behavior: 'smooth' });
+  resetMenu();
+  renderAll();
+  renderFontOptions();
+  updatePreviewBtn();
 });
 
 async function doImport(username) {
@@ -125,6 +164,8 @@ async function doImport(username) {
 
     const data = await res.json();
     state.games = data.games || [];
+    rehydrateCustomGames();
+    loadDescriptions();
 
     history.replaceState(null, '', `?username=${encodeURIComponent(username)}`);
 
@@ -299,7 +340,16 @@ function renderGrid() {
       const playsHtml = playBadge(g);
       return `
         <div class="game-card${assigned ? ' game-card__assigned' : ''}" data-id="${g.id}">
-          <div class="game-card__name">${escHtml(g.name)}</div>
+          <div class="game-card__heading">
+            <div class="game-card__name">${escHtml(g.name)}</div>
+            <div class="game-card__heading-actions">
+              <button class="game-card__action-btn" data-desc="${g.id}" title="${g.desc ? 'Edit description' : 'Add description'}">📝</button>
+              ${g._custom ? `
+              <button class="game-card__action-btn game-card__action-btn--edit" data-custom-edit="${g.id}" title="Edit">✏️</button>
+              <button class="game-card__action-btn game-card__action-btn--delete" data-custom-delete="${g.id}" title="Delete">🗑️</button>
+              ` : ''}
+            </div>
+          </div>
           <div class="game-card__row">
             <div class="game-card__thumb">
               ${g.thumbnail ? `<img src="${g.thumbnail}" alt="" loading="lazy" />` : '<div class="game-card__thumb-placeholder"></div>'}
@@ -309,11 +359,13 @@ function renderGrid() {
               <div class="game-card__info-row"><span class="game-card__info-label">Duration</span><span>${g.playingTime || '?'} min</span></div>
               <div class="game-card__info-row"><span class="game-card__info-label">Complexity</span><span>${g.weight ? g.weight.toFixed(1) : '?'}</span></div>
               ${rating ? `<div class="game-card__info-row"><span class="game-card__info-label">BGG Rating</span><span>${rating}</span></div>` : ''}
+
               ${playsHtml ? `<div class="game-card__info-row"><span class="game-card__info-label">Plays</span><span class="stars">${playsHtml}</span></div>` : ''}
             </div>
           </div>
           <div class="game-card__footer-row">
             ${badge ? `<span class="game-card__badge badge--${assigned}">${badge}</span>` : ''}
+            ${g._custom ? `<span class="game-card__badge badge--custom">Custom</span>` : ''}
             ${showSuggestion ? `<span class="game-card__suggestion ${suggestion}">recommended as ${suggestion}</span>` : ''}
           </div>
         </div>
@@ -322,7 +374,8 @@ function renderGrid() {
     .join('');
 
   gameGrid.querySelectorAll('.game-card').forEach((card) => {
-    card.addEventListener('click', () => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.game-card__action-btn')) return;
       const id = parseInt(card.dataset.id, 10);
       const game = state.games.find((g) => g.id === id);
       if (!game) return;
@@ -348,6 +401,34 @@ function renderGrid() {
       renderAll();
     });
   });
+
+  gameGrid.querySelectorAll('[data-custom-edit]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      editCustomGame(parseInt(btn.dataset.customEdit, 10));
+    });
+  });
+
+  gameGrid.querySelectorAll('[data-custom-delete]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm('Delete this custom game?')) {
+        deleteCustomGame(parseInt(btn.dataset.customDelete, 10));
+      }
+    });
+  });
+
+  gameGrid.querySelectorAll('[data-desc]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = parseInt(btn.dataset.desc, 10);
+      const game = state.games.find((g) => g.id === id);
+      if (!game) return;
+      descTargetId = id;
+      descText.value = game.desc || '';
+      descModal.classList.remove('hidden');
+    });
+  });
 }
 
 /* ─── Slots (Course Cards) ──────────────────────────────────── */
@@ -371,7 +452,10 @@ function renderSlots() {
             <div class="course-card__item-thumb">
               ${g.thumbnail ? `<img src="${g.thumbnail}" alt="" />` : ''}
             </div>
-            <span class="course-card__item-name">${escHtml(g.name)}</span>
+            <div class="course-card__item-body">
+              <span class="course-card__item-name">${escHtml(g.name)}</span>
+              ${g.desc ? `<span class="course-card__item-desc">${escHtml(g.desc)}</span>` : ''}
+            </div>
             <button class="course-card__item-remove" data-id="${g.id}" data-course="${course}">✕</button>
           </div>
         `
@@ -437,7 +521,8 @@ previewBtn.addEventListener('click', () => {
             </div>
             <div class="menu-card__item-body">
               <div class="menu-card__item-name">${escHtml(g.name)}</div>
-              <div class="menu-card__item-desc">${g.year || ''} · ${g.minPlayers}–${g.maxPlayers} players · ${g.playingTime || g.maxPlayTime || '?'} min${rating ? ' · BGG ' + rating : ''}${g.weight ? ' · C' + g.weight.toFixed(1) : ''}</div>
+              ${g.desc ? `<div class="menu-card__item-desc">${escHtml(g.desc)}</div>` : ''}
+              <div class="menu-card__item-stats">${g.year || ''} ${g.year ? '·' : ''} ${g.minPlayers}–${g.maxPlayers} players · ${g.playingTime || g.maxPlayTime || '?'} min${rating ? ' · BGG ' + rating : ''}${g.weight ? ' · C' + g.weight.toFixed(1) : ''}</div>
             </div>
             <div class="menu-card__item-details">${playBadge(g)}</div>
           </li>
@@ -650,6 +735,251 @@ function generateMenu(games, vibe, playerCount) {
       dessert: desserts,
     }
   };
+}
+
+/* ─── Custom Game ───────────────────────────────────────────── */
+customBtn.addEventListener('click', () => {
+  editingCustomId = null;
+  customFormTitle.textContent = '➕ Custom Game';
+  customForm.reset();
+  customImg.value = '';
+  customPreviewImg.src = '';
+  customDropzone.querySelector('.dropzone__placeholder').classList.remove('hidden');
+  customDropzone.querySelector('.dropzone__preview').classList.add('hidden');
+  customWeight.value = '2.0';
+  customDesc.value = '';
+  customError.classList.add('hidden');
+  customModal.classList.remove('hidden');
+});
+
+closeCustomBtn.addEventListener('click', () => customModal.classList.add('hidden'));
+customModal.querySelector('.modal__backdrop').addEventListener('click', () => customModal.classList.add('hidden'));
+
+/* ─── Drag & Drop Upload ────────────────────────────────── */
+customDropzone.addEventListener('click', (e) => {
+  if (e.target.closest('.dropzone__remove')) return;
+  customImgFile.click();
+});
+
+customDropzone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  customDropzone.classList.add('dropzone--over');
+});
+
+customDropzone.addEventListener('dragleave', () => {
+  customDropzone.classList.remove('dropzone--over');
+});
+
+customDropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  customDropzone.classList.remove('dropzone--over');
+  const files = e.dataTransfer.files;
+  if (files.length > 0) uploadImage(files[0]);
+});
+
+customImgFile.addEventListener('change', () => {
+  if (customImgFile.files.length > 0) uploadImage(customImgFile.files[0]);
+});
+
+customImgRemove.addEventListener('click', (e) => {
+  e.stopPropagation();
+  customImg.value = '';
+  customPreviewImg.src = '';
+  customImgFile.value = '';
+  customDropzone.querySelector('.dropzone__placeholder').classList.remove('hidden');
+  customDropzone.querySelector('.dropzone__preview').classList.add('hidden');
+});
+
+function uploadImage(file) {
+  if (!file.type.startsWith('image/')) {
+    customError.textContent = 'Only image files are allowed.';
+    customError.classList.remove('hidden');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    customError.textContent = 'Image must be 5 MB or smaller.';
+    customError.classList.remove('hidden');
+    return;
+  }
+
+  customDropzone.querySelector('.dropzone__placeholder').innerHTML = '<span>Reading image…</span>';
+  const reader = new FileReader();
+  reader.onerror = () => {
+    customError.textContent = 'Failed to read image file.';
+    customError.classList.remove('hidden');
+    customDropzone.querySelector('.dropzone__placeholder').innerHTML = `
+      <span class="dropzone__icon">📁</span>
+      <span>Drop an image here or click to browse</span>
+      <span class="dropzone__hint">JPG, PNG, GIF, WebP · max 5 MB</span>
+    `;
+  };
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    customImg.value = dataUrl;
+    customPreviewImg.src = dataUrl;
+    customDropzone.querySelector('.dropzone__placeholder').classList.add('hidden');
+    customDropzone.querySelector('.dropzone__preview').classList.remove('hidden');
+    customError.classList.add('hidden');
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ─── Submit Custom Game ─────────────────────────────────── */
+customForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  customError.classList.add('hidden');
+
+  const name = customName.value.trim();
+  if (!name) {
+    customError.textContent = 'Game name is required.';
+    customError.classList.remove('hidden');
+    return;
+  }
+
+  const weight = parseFloat(customWeight.value) || 2.0;
+  const minP = parseInt(customMin.value, 10) || 2;
+  const maxP = parseInt(customMax.value, 10) || 6;
+  const time = parseInt(customTime.value, 10) || 30;
+  const desc = customDesc.value.trim();
+  const imgUrl = customImg.value.trim() || null;
+
+  if (editingCustomId !== null) {
+    const existing = state.games.find((g) => g.id === editingCustomId);
+    if (existing) {
+      existing.name = name;
+      existing.minPlayers = minP;
+      existing.maxPlayers = maxP;
+      existing.playingTime = time;
+      existing.desc = desc;
+      existing.weight = weight;
+      existing.thumbnail = imgUrl;
+      existing.image = imgUrl;
+    }
+  } else {
+    const game = {
+      id: customIdCounter,
+      name,
+      year: new Date().getFullYear(),
+      thumbnail: imgUrl,
+      image: imgUrl,
+      minPlayers: minP,
+      maxPlayers: maxP,
+      playingTime: time,
+      weight,
+      bggRating: null,
+      numPlays: 0,
+      desc,
+      _custom: true,
+    };
+    customIdCounter--;
+    state.games.push(game);
+  }
+
+  saveCustomGames();
+  customModal.classList.add('hidden');
+  resetMenu();
+  renderAll();
+  renderFontOptions();
+});
+
+function deleteCustomGame(id) {
+  state.games = state.games.filter((g) => g.id !== id);
+  for (const course of ['appetizer', 'main', 'dessert']) {
+    state.menu[course] = state.menu[course].filter((g) => g.id !== id);
+  }
+  saveCustomGames();
+  renderAll();
+}
+
+function editCustomGame(id) {
+  const game = state.games.find((g) => g.id === id);
+  if (!game) return;
+  editingCustomId = id;
+  customFormTitle.textContent = '✏️ Edit Custom Game';
+  customName.value = game.name;
+  customMin.value = game.minPlayers || 2;
+  customMax.value = game.maxPlayers || 6;
+  customTime.value = game.playingTime || 30;
+  customDesc.value = game.desc || '';
+  customWeight.value = (game.weight || 2.0).toString();
+
+  if (game.thumbnail) {
+    customImg.value = game.thumbnail;
+    customPreviewImg.src = game.thumbnail;
+    customDropzone.querySelector('.dropzone__placeholder').classList.add('hidden');
+    customDropzone.querySelector('.dropzone__preview').classList.remove('hidden');
+  } else {
+    customImg.value = '';
+    customPreviewImg.src = '';
+    customDropzone.querySelector('.dropzone__placeholder').classList.remove('hidden');
+    customDropzone.querySelector('.dropzone__preview').classList.add('hidden');
+  }
+
+  customModal.classList.remove('hidden');
+  customError.classList.add('hidden');
+}
+
+function saveCustomGames() {
+  const customs = state.games.filter((g) => g._custom);
+  try {
+    localStorage.setItem('boardgames-menu-custom', JSON.stringify(customs));
+  } catch (_) {}
+}
+
+function loadCustomGames() {
+  try {
+    const raw = localStorage.getItem('boardgames-menu-custom');
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch (_) {
+    return [];
+  }
+}
+
+function rehydrateCustomGames() {
+  const customs = loadCustomGames();
+  customs.forEach((g) => {
+    if (g.id < customIdCounter) customIdCounter = g.id;
+    if (!state.games.some((x) => x.id === g.id)) {
+      state.games.push(g);
+    }
+  });
+}
+
+rehydrateCustomGames();
+
+/* ─── Description Modal ────────────────────────────────────── */
+closeDescBtn.addEventListener('click', () => descModal.classList.add('hidden'));
+descModal.querySelector('.modal__backdrop').addEventListener('click', () => descModal.classList.add('hidden'));
+
+descSaveBtn.addEventListener('click', () => {
+  const game = state.games.find((g) => g.id === descTargetId);
+  if (!game) return;
+  game.desc = descText.value.trim() || undefined;
+  saveDescriptions();
+  descModal.classList.add('hidden');
+  renderAll();
+});
+
+function saveDescriptions() {
+  const descriptions = {};
+  state.games.forEach((g) => {
+    if (g.desc) descriptions[g.id] = g.desc;
+  });
+  try {
+    localStorage.setItem('boardgames-menu-descriptions', JSON.stringify(descriptions));
+  } catch (_) {}
+}
+
+function loadDescriptions() {
+  try {
+    const raw = localStorage.getItem('boardgames-menu-descriptions');
+    if (!raw) return;
+    const descriptions = JSON.parse(raw);
+    state.games.forEach((g) => {
+      if (descriptions[g.id]) g.desc = descriptions[g.id];
+    });
+  } catch (_) {}
 }
 
 /* ─── Auto-load from URL ────────────────────────────────────── */

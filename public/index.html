@@ -42,6 +42,7 @@
             </button>
           </div>
         </form>
+        <button type="button" class="skip-link" id="skip-btn">I don't have a BGG account &rarr;</button>
 
         <div id="import-error" class="msg msg--error hidden"></div>
         <div id="import-result" class="msg hidden">
@@ -115,8 +116,9 @@
           </div>
         </div>
 
-        <div class="builder-actions" style="margin:16px 0 8px;text-align:left;">
+        <div class="builder-actions" style="margin:16px 0 8px;text-align:left;display:flex;gap:8px;flex-wrap:wrap;">
           <button id="generate-btn" class="btn btn--gold btn--sm">✨ Automatic Selection</button>
+          <button id="custom-btn" class="btn btn--primary btn--sm">➕ Custom Game</button>
         </div>
 
         <!-- Game Grid -->
@@ -241,6 +243,80 @@
     </div>
   </div>
 
+  <!-- ═══════════════════ CUSTOM GAME MODAL ═══════════════════ -->
+  <div id="custom-modal" class="modal hidden">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content" style="max-width:480px;">
+      <div class="modal__header">
+        <h2 class="modal__title" id="custom-form-title">➕ Custom Game</h2>
+        <button id="close-custom-btn" class="btn btn--sm">✕ Close</button>
+      </div>
+      <div class="modal__body">
+        <form id="custom-form" class="gen-form">
+          <div class="gen-field">
+            <label class="gen-field__label" for="custom-name">Game Name</label>
+            <input type="text" id="custom-name" class="input" required placeholder="e.g. My House Rule Game" />
+          </div>
+
+          <div class="gen-row">
+            <div class="gen-field" style="flex:2">
+              <label class="gen-field__label" for="custom-min">Min Players</label>
+              <input type="number" id="custom-min" class="input" value="2" min="1" max="20" />
+            </div>
+            <div class="gen-field" style="flex:2">
+              <label class="gen-field__label" for="custom-max">Max Players</label>
+              <input type="number" id="custom-max" class="input" value="6" min="1" max="20" />
+            </div>
+            <div class="gen-field" style="flex:3">
+              <label class="gen-field__label" for="custom-time">Duration (min)</label>
+              <input type="number" id="custom-time" class="input" value="30" min="1" max="480" />
+            </div>
+          </div>
+
+          <div class="gen-field">
+            <label class="gen-field__label">Image</label>
+            <div id="custom-dropzone" class="dropzone">
+              <div class="dropzone__placeholder">
+                <span class="dropzone__icon">📁</span>
+                <span>Drop an image here or click to browse</span>
+                <span class="dropzone__hint">JPG, PNG, GIF, WebP · max 5 MB</span>
+              </div>
+              <div class="dropzone__preview hidden">
+                <img id="custom-preview-img" src="" alt="Preview" />
+                <button type="button" id="custom-img-remove" class="dropzone__remove" title="Remove image">✕</button>
+              </div>
+              <input type="file" id="custom-img-file" accept="image/*" class="hidden" />
+              <input type="hidden" id="custom-img" />
+            </div>
+          </div>
+
+          <div class="gen-field">
+            <label class="gen-field__label" for="custom-desc">Description</label>
+            <textarea id="custom-desc" class="input input--textarea" rows="3" placeholder="A short description for the menu… e.g. A frantic card game about cooking pasta"></textarea>
+          </div>
+
+          <div class="gen-field">
+            <label class="gen-field__label" for="custom-weight">Complexity</label>
+            <select id="custom-weight" class="input" style="appearance:auto;">
+              <option value="1.0">Light (1.0)</option>
+              <option value="1.5">Light-Medium (1.5)</option>
+              <option value="2.0" selected>Medium (2.0)</option>
+              <option value="2.5">Medium-Heavy (2.5)</option>
+              <option value="3.0">Heavy (3.0)</option>
+              <option value="4.0">Expert (4.0)</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn--gold" style="width:100%;margin-top:16px;">
+            ✓ Add to Collection
+          </button>
+
+          <div id="custom-error" class="msg msg--error hidden" style="margin-top:12px;"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══════════════════ MENU PREVIEW MODAL ═══════════════════ -->
   <div id="menu-modal" class="modal hidden">
     <div class="modal__backdrop"></div>
@@ -283,6 +359,28 @@
           <p class="menu-card__footer-text">Buon appetito!</p>
         </div>
         <div class="menu-card__ornament menu-card__ornament--bottom"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ DESCRIPTION MODAL ═══════════════════ -->
+  <div id="desc-modal" class="modal hidden">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content" style="max-width:420px;">
+      <div class="modal__header">
+        <h2 class="modal__title" id="desc-modal-title">📝 Game Description</h2>
+        <button id="close-desc-btn" class="btn btn--sm">✕ Close</button>
+      </div>
+      <div class="modal__body">
+        <div class="gen-form">
+          <div class="gen-field">
+            <label class="gen-field__label" for="desc-text">Description</label>
+            <textarea id="desc-text" class="input input--textarea" rows="4" placeholder="A short description for the menu…"></textarea>
+          </div>
+          <button id="desc-save-btn" class="btn btn--gold" style="width:100%;margin-top:8px;">
+            ✓ Save
+          </button>
+        </div>
       </div>
     </div>
   </div>
