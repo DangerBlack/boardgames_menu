@@ -1186,9 +1186,9 @@ body {
 
 .menu-card__item-desc {
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: #6b5e4a;
   font-family: var(--font-body);
-  font-weight: 300;
+  font-weight: 400;
   font-style: italic;
   margin-top: 2px;
 }
@@ -1260,13 +1260,16 @@ body {
     display: none !important;
   }
 
-  .modal {
-    position: static;
+  #menu-modal {
+    position: absolute;
+    top: 0;
+    left: 0;
     display: block !important;
     background: none;
     z-index: auto;
   }
 
+  .modal { display: none !important; }
   .modal__backdrop { display: none !important; }
 
   .modal__content {
@@ -1305,4 +1308,27 @@ body {
     margin: 15mm;
     size: A4 portrait;
   }
+}
+
+/* ─── Toast ──────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gold);
+  color: #1a1a2e;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  z-index: 9999;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  transition: opacity 0.3s;
+}
+
+.toast.hidden {
+  opacity: 0;
+  pointer-events: none;
 }

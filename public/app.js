@@ -50,7 +50,6 @@ function loadGoogleFont(font) {
 
 /* ─── DOM refs ──────────────────────────────────────────────── */
 const $ = (s) => document.querySelector(s);
-const $$ = (s) => document.querySelectorAll(s);
 
 const importForm = $('#import-form');
 const usernameInput = $('#username-input');
@@ -84,7 +83,9 @@ const menuModal = $('#menu-modal');
 const menuContent = $('#menu-content');
 const menuPreview = $('#menu-preview');
 const printBtn = $('#print-btn');
+const shareBtn = $('#share-btn');
 const closeModalBtn = $('#close-modal-btn');
+const toast = $('#toast');
 
 /* ─── Generator refs ─────────────────────────────────────────── */
 const genBtn = $('#generate-btn');
@@ -259,6 +260,7 @@ function renderFontOptions() {
     });
   }
 
+  state.font = menuFonts[0].name;
   applyFont(menuFonts[0]);
   loadGoogleFont(menuFonts[0]);
 
@@ -266,6 +268,7 @@ function renderFontOptions() {
     if (e.target.name === 'menu-font') {
       const font = menuFonts.find((f) => f.value === e.target.value);
       if (font) {
+        state.font = font.name;
         loadGoogleFont(font);
         applyFont(font);
       }
@@ -548,6 +551,52 @@ document.addEventListener('keydown', (e) => {
 });
 
 printBtn.addEventListener('click', () => window.print());
+
+/* ─── Share URL ────────────────────────────────────────────── */
+const SHARE_FIELDS = ['id', 'name', 'year', 'thumbnail', 'minPlayers', 'maxPlayers', 'playingTime', 'weight', 'bggRating', 'numPlays', 'desc', '_custom'];
+
+function pick(obj, fields) {
+  const r = {};
+  for (const f of fields) {
+    if (f in obj) r[f] = obj[f];
+  }
+  return r;
+}
+
+function serializeMenu() {
+  const menu = {};
+  for (const course of ['appetizer', 'main', 'dessert']) {
+    menu[course] = state.menu[course].map((g) => pick(g, SHARE_FIELDS));
+  }
+  const data = { m: menu, p: state.playerCount, f: state.font || 'Playfair Display' };
+  try {
+    return btoa(JSON.stringify(data));
+  } catch {
+    return null;
+  }
+}
+
+shareBtn.addEventListener('click', () => {
+  const encoded = serializeMenu();
+  if (!encoded) {
+    showToast('Could not encode menu data.');
+    return;
+  }
+  const url = `${window.location.origin}/menu#${encoded}`;
+  navigator.clipboard.writeText(url).then(() => {
+    showToast('🔗 Link copied to clipboard!');
+  }).catch(() => {
+    showToast('Could not copy link.');
+  });
+});
+
+let toastTimer = null;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.add('hidden'), 3000);
+}
 
 /* ─── Render Utilities ──────────────────────────────────────── */
 function renderAll() {
@@ -853,7 +902,6 @@ customForm.addEventListener('submit', (e) => {
       existing.desc = desc;
       existing.weight = weight;
       existing.thumbnail = imgUrl;
-      existing.image = imgUrl;
     }
   } else {
     const game = {
@@ -861,7 +909,6 @@ customForm.addEventListener('submit', (e) => {
       name,
       year: new Date().getFullYear(),
       thumbnail: imgUrl,
-      image: imgUrl,
       minPlayers: minP,
       maxPlayers: maxP,
       playingTime: time,
@@ -988,4 +1035,57 @@ const urlUsername = urlParams.get('username');
 if (urlUsername) {
   usernameInput.value = urlUsername;
   doImport(urlUsername);
+}
+
+const hashMenu = window.location.hash.replace('#', '');
+if (hashMenu) {
+  loadSharedMenu(hashMenu);
+}
+
+function loadSharedMenu(encoded) {
+  try {
+    const raw = atob(encoded);
+    const data = JSON.parse(raw);
+    state.menu = { appetizer: [], main: [], dessert: [] };
+    const allGames = [];
+    for (const course of ['appetizer', 'main', 'dessert']) {
+      const games = (data.m || {})[course] || [];
+      state.menu[course] = games;
+      allGames.push(...games);
+    }
+    state.games = allGames;
+    state.playerCount = data.p ?? 4;
+
+    stepBuilder.classList.remove('hidden');
+    stepFont.classList.remove('hidden');
+    renderGrid();
+    renderSlots();
+    renderFontOptions();
+    updatePreviewBtn();
+
+    if (data.f) {
+      state.font = data.f;
+      const font = menuFonts.find((x) => x.name === data.f);
+      if (font) {
+        loadGoogleFont(font);
+        const menuTitle = document.querySelector('.menu-card__restaurant');
+        const courseTitles = document.querySelectorAll('.menu-card__course-title');
+        menuPreview.style.fontFamily = font.value;
+        menuTitle.style.fontFamily = font.value;
+        menuTitle.style.textTransform = font.caps === 'all' ? 'uppercase' : 'capitalize';
+        courseTitles.forEach((t) => {
+          t.style.fontFamily = font.value;
+          t.style.textTransform = font.caps === 'all' ? 'uppercase' : 'capitalize';
+        });
+        const radios = document.querySelectorAll('input[name="menu-font"]');
+        for (const r of radios) {
+          if (r.value === font.value) { r.checked = true; break; }
+        }
+      }
+    }
+
+    previewBtn.click();
+  } catch {
+    showToast('Could not load shared menu.');
+  }
 }

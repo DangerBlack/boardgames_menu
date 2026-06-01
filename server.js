@@ -12,6 +12,10 @@ const CACHE_TTL = 120 * 60 * 1000;
 
 app.use(express.static('public'));
 
+app.get('/menu', (req, res) => {
+  res.sendFile('public/index.html', { root: process.cwd() });
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
@@ -68,7 +72,6 @@ app.get('/api/collection', async (req, res) => {
       name: decode(item.name?.text || item.name || 'Unknown'),
       year: item.yearpublished ? parseInt(item.yearpublished, 10) : null,
       thumbnail: item.thumbnail || null,
-      image: item.image || null,
       minPlayers: item.stats?.minplayers
         ? parseInt(item.stats.minplayers, 10)
         : null,
