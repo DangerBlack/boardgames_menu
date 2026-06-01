@@ -12,6 +12,18 @@ const CACHE_TTL = 120 * 60 * 1000;
 
 app.use(express.static('public'));
 
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    console.log(`${req.method} ${req.path} → ${res.statusCode} (${Date.now() - start}ms)`);
+  });
+  next();
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() });
+});
+
 if (!process.env.BGG_TOKEN) {
   console.error('BGG_TOKEN environment variable is required. Get one at https://boardgamegeek.com/settings/api');
   process.exit(1);
@@ -23,10 +35,16 @@ app.get('/api/collection', async (req, res) => {
   if (!username) {
     return res.status(400).json({ error: 'Missing username parameter' });
   }
+  if (!/^[a-zA-Z0-9_.-]+$/.test(username)) {
+    return res.status(400).json({ error: 'Invalid BGG username format' });
+  }
+
+  console.log(`Fetching collection for user=${username}`);
 
   const cacheKey = username.toLowerCase();
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.ts < CACHE_TTL) {
+    console.log(`Serving ${cached.games.length} games for user=${username} (cached)`);
     return res.json({ games: cached.games });
   }
 
@@ -39,6 +57,7 @@ app.get('/api/collection', async (req, res) => {
     const rawItems = data?.item;
     if (!rawItems) {
       cache.set(cacheKey, { games: [], ts: Date.now() });
+      console.log(`No games found for user=${username}`);
       return res.json({ games: [] });
     }
 
@@ -64,7 +83,6 @@ app.get('/api/collection', async (req, res) => {
       bggRating: null,
     }));
 
-    // Batch-fetch complexity (weight) from thing endpoint
     const batchSize = 20;
     for (let i = 0; i < games.length; i += batchSize) {
       const batch = games.slice(i, i + batchSize);
@@ -99,9 +117,10 @@ app.get('/api/collection', async (req, res) => {
     games.sort((a, b) => sortKey(a.name).localeCompare(sortKey(b.name)));
 
     cache.set(cacheKey, { games, ts: Date.now() });
+    console.log(`Cached ${games.length} games for user=${username}`);
     res.json({ games });
   } catch (err) {
-    console.error('BGG API error:', err.message);
+    console.error(`failure for user=${username}: ${err.message}`);
     res.status(500).json({
       error: 'Failed to fetch collection from BoardGameGeek.',
       details: err.message,
